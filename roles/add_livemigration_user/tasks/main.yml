@@ -10,6 +10,7 @@
       system: true
       group: libvirt
       create_home: true
+    when: ansible_distribution | regex_search("CentOS|Debian")
   - name: Unlock the user
     replace:
         path: /etc/shadow
@@ -24,7 +25,7 @@
       ssh_key_file: .ssh/id_rsa
       ssh_key_passphrase: ""
       force: false
-  - name: create livemigration .ssh directory
+  - name: create livemigration ssh directory
     file:
       path: "/home/{{ livemigration_user }}/.ssh"
       state: directory
@@ -33,9 +34,10 @@
   - name: Get root user's home directory
     shell: getent passwd root | cut -d ':' -f6
     register: root_home_dir
+    when: ansible_distribution | regex_search("CentOS|Debian")
   - name: Fetch the root keyfile
     fetch:
-      src: "{{ root_home_dir.stdout }}/.ssh/id_rsa.pub"
+      src: "{{ root_home_dir.stdout | default (ansible_env['HOME']) }}/.ssh/id_rsa.pub"
       dest: "buffer/{{ inventory_hostname }}-id_rsa.pub"
       flat: true
   - name: Copy the key add to authorized_keys using Ansible module
@@ -52,6 +54,7 @@
       path: "/home/{{ admin_user }}/.ssh/authorized_keys"
       key: "{{ lookup('file','buffer/' + item + '-id_rsa.pub') }}"
     with_items: "{{ groups['hypervisors'] }}"
+    when: ansible_distribution | regex_search("CentOS|Debian")
   - name: Fetch the ssh keyfile
     fetch:
       src: "/etc/ssh/ssh_host_ed25519_key.pub"
@@ -59,7 +62,7 @@
       flat: true
   - name: populate the known_hosts files
     known_hosts:
-      path: "{{ root_home_dir.stdout }}/.ssh/known_hosts"
+      path: "{{ root_home_dir.stdout | default (ansible_env['HOME']) }}/.ssh/known_hosts"
       name: "{{ item }}"
       key: "{{ item }} {{ lookup('file','buffer/' + item + '-ssh_host_ed25519_key.pub') }}"
     with_items: "{{ groups['hypervisors'] }}"
