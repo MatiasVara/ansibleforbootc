@@ -4,7 +4,7 @@ This role sets the live migration user on the cluster, with ssh key exchanges
 
 ## Requirements
 
-no requirement.
+- detect_seapath_distro
 
 ## Role Variables
 

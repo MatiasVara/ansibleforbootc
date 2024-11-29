@@ -4,7 +4,7 @@ This role prepares the ceph installation by identifying if it's a new install an
 
 ## Requirements
 
-no requirement.
+- detect_seapath_distro
 
 ## Role Variables
 

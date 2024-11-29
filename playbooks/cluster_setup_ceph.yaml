@@ -12,6 +12,12 @@
   roles:
     - ceph_prepare_installation
 
+- name: Detect Seapath distribution
+  hosts:
+    osds
+  roles:
+    - detect_seapath_distro
+
 - name: Ceph Expansion VG
   hosts:
       osds
@@ -19,7 +25,7 @@
   gather_facts: yes
   roles:
     - role: ceph_expansion_vg
-      when: ansible_distribution | regex_search("Debian")
+      when: seapath_distro == "Debian"
 - name: Ceph Expansion LV
   hosts:
       osds
@@ -28,7 +34,7 @@
   serial: 1
   roles:
     - role: ceph_expansion_lv
-      when: ansible_distribution | regex_search("Debian")
+      when: seapath_distro == "Debian"
 - import_playbook: ../ceph-ansible/site.yml
 
 # Ceph mgr module which is enabled by default is not supported by SEAPATH.
