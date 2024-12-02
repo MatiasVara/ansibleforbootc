@@ -1,0 +1,87 @@
+diff --git a/roles/ceph-common/tasks/installs/install_redhat_packages.yml b/roles/ceph-common/tasks/installs/install_redhat_packages.yml
+index 7e9f6d62f..21206902d 100644
+--- a/roles/ceph-common/tasks/installs/install_redhat_packages.yml
++++ b/roles/ceph-common/tasks/installs/install_redhat_packages.yml
+@@ -1,23 +1,47 @@
+ ---
+-- name: install redhat dependencies
+-  package:
+-    name: "{{ redhat_package_dependencies }}"
+-    state: present
+-  register: result
+-  until: result is succeeded
+-  when: ansible_facts['distribution'] == 'RedHat'
+-
+-- name: install centos dependencies
+-  yum:
+-    name: "{{ centos_package_dependencies }}"
+-    state: present
+-  register: result
+-  until: result is succeeded
+-  when: ansible_facts['distribution'] == 'CentOS'
+-
+-- name: install redhat ceph packages
+-  package:
+-    name: "{{ redhat_ceph_pkgs | unique }}"
+-    state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
+-  register: result
+-  until: result is succeeded
++# Moved to container
++#- name: install redhat dependencies
++#  package:
++#    name: "{{ redhat_package_dependencies }}"
++#    state: present
++#  register: result
++#  until: result is succeeded
++#  when: ansible_facts['distribution'] == 'RedHat'
++#
++#- name: Check if EPEL is installed
++#  stat:
++#    path: /etc/yum.repos.d/epel.repo
++#  register: epel_installed
++#  when: ansible_facts['distribution'] == 'CentOS'
++#  tags: epel
++#
++#- name: Install GPG key
++#  become: yes
++#  rpm_key:
++#    key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
++#    state: present
++#  when: ansible_facts['distribution'] == 'CentOS' and not epel_installed.stat.exists
++#  tags: epel
++#
++#- name: install centos dependencies
++#  yum:
++#    name: "{{ centos_package_dependencies }}"
++#    state: present
++#  register: result
++#  until: result is succeeded
++#  when: ansible_facts['distribution'] == 'CentOS'
++#
++#- name: Install GPG key for Ceph
++#  become: yes
++#  rpm_key:
++#    key: https://www.centos.org/keys/RPM-GPG-KEY-CentOS-SIG-Storage
++#    state: present
++#  when: ansible_facts['distribution'] == 'CentOS'
++#  tags: epel
++#
++#- name: install redhat ceph packages
++#  package:
++#    name: "{{ redhat_ceph_pkgs | unique }}"
++#    state: "{{ (upgrade_ceph_packages|bool) | ternary('latest','present') }}"
++#  register: result
++#  until: result is succeeded
+diff --git a/roles/ceph-validate/tasks/check_devices.yml b/roles/ceph-validate/tasks/check_devices.yml
+index 96ce601c3..96a7c541f 100644
+--- a/roles/ceph-validate/tasks/check_devices.yml
++++ b/roles/ceph-validate/tasks/check_devices.yml
+@@ -1,7 +1,7 @@
+ ---
+ - name: set_fact root_device
+   set_fact:
+-    root_device: "{{ ansible_facts['mounts'] | selectattr('mount', 'match', '^/$') | map(attribute='device') | first }}"
++    root_device: "{{ ansible_facts['mounts'] | selectattr('mount', 'match', '^/var$') | map(attribute='device') | first }}"
+ 
+ - name: lvm_volumes variable's tasks related
+   when:

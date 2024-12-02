@@ -54,6 +54,9 @@ ansible-galaxy collection install --collections-path="$(pwd)/collections" -r \
 echo "Update git submodules"
 git submodule update --init --force
 
+# checkout specific version for the moment
+pushd . && cd roles/deploy_vm_manager/files/vm_manager && git checkout 65c61c2cd && popd
+
 echo "Copy ceph-ansible site.yml"
 cp -vf src/ceph-ansible-site.yaml ceph-ansible/site.yml
 
