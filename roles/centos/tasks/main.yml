@@ -2,6 +2,7 @@
 # Copyright (C) 2024 Red Hat, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
+# TODO: this probably can be moved to the containerfile
 - name: disable vim defaults
   lineinfile:
     dest: /etc/vimrc
@@ -61,24 +62,25 @@
     - syslog_tls_key is defined
     - syslog_tls_server_ca is defined
 
-- name: removing or not the virtu user created by the iso
-  block:
-    - name: remove 'virtu' from sudoers file
-      lineinfile:
-        dest: /etc/sudoers
-        state: absent
-        regexp: '^virtu'
-        validate: visudo -cf %s
-    - name: Remove the virtu user 
-      ansible.builtin.user:
-        name: virtu
-        state: absent
-        remove: yes
-    - name: Remove the virtu group 
-      ansible.builtin.group:
-        name: virtu
-        state: absent
-  when: admin_user != "virtu"
+      # the virtu user is not created in the bootc image so we remove it
+      #- name: removing or not the virtu user created by the iso
+      #  block:
+      #    - name: remove 'virtu' from sudoers file
+      #      lineinfile:
+      #        dest: /etc/sudoers
+      #        state: absent
+      #        regexp: '^virtu'
+      #        validate: visudo -cf %s
+      #    - name: Remove the virtu user 
+      #      ansible.builtin.user:
+      #        name: virtu
+      #        state: absent
+      #        remove: yes
+      #    - name: Remove the virtu group 
+      #      ansible.builtin.group:
+      #        name: virtu
+      #        state: absent
+      #  when: admin_user != "virtu"
 
 - name: Copy journald conf file
   ansible.builtin.copy:
@@ -92,39 +94,42 @@
     name: systemd-journald
   when: journaldconf.changed
 
-- name: Ensure admin group exists
-  ansible.builtin.group:
-    name: "{{ admin_user }}"
-    state: present
-    gid: 1000
-- name: Adding admin user
-  user:
-    name: "{{ admin_user }}"
-    shell: /bin/bash
-    group: "{{ admin_user }}"
-    uid: 1000
-    password: "{{ admin_passwd | default(omit) }}"
-    append: no
-- name: Add authorized keys to admin user
-  authorized_key:
-    user: "{{ admin_user }}"
-    key: "{{ item }}"
-  with_items: "{{ admin_ssh_keys }}"
-  when: admin_ssh_keys is defined and admin_ssh_keys is iterable
-- name: Install sudo admin user rules
-  copy:
-    content: |
-      {{ admin_user }}   ALL=NOPASSWD:EXEC: ALL
-    dest: "/etc/sudoers.d/{{ admin_user }}"
-    owner: root
-    group: root
-    mode: '0440'
-- name: Remove admin sudoers line created by build_debian_iso
-  lineinfile:
-    dest: /etc/sudoers
-    state: absent
-    regexp: '^{{ admin_user }}'
-    validate: visudo -cf %s
+    # admin_user is already created by the bootc image
+    # remove it from here
+    #- name: Ensure admin group exists
+    #  ansible.builtin.group:
+    #    name: "{{ admin_user }}"
+    #    state: present
+    #    gid: 1000
+    #- name: Adding admin user
+    #  user:
+    #    name: "{{ admin_user }}"
+    #    shell: /bin/bash
+    #    group: "{{ admin_user }}"
+    #    uid: 1000
+    #    password: "{{ admin_passwd | default(omit) }}"
+    #    append: no
+    #- name: Add authorized keys to admin user
+    #  authorized_key:
+    #    user: "{{ admin_user }}"
+    #    key: "{{ item }}"
+    #  with_items: "{{ admin_ssh_keys }}"
+    #  when: admin_ssh_keys is defined and admin_ssh_keys is iterable
+    #- name: Install sudo admin user rules
+    #  copy:
+    #    content: |
+    #      {{ admin_user }}   ALL=NOPASSWD:EXEC: ALL
+    #    dest: "/etc/sudoers.d/{{ admin_user }}"
+    #    owner: root
+    #    group: root
+    #    mode: '0440'
+    #
+    #- name: Remove admin sudoers line created by build_debian_iso
+    #  lineinfile:
+    #    dest: /etc/sudoers
+    #    state: absent
+    #    regexp: '^{{ admin_user }}'
+    #    validate: visudo -cf %s
 
 - name: Copy sysctl rules
   ansible.builtin.copy:
@@ -162,42 +167,46 @@
     mode: '0644'
 
 
-- name: "remove GRUB_CMDLINE_LINUX_DEFAULT option in grub conf"
-  lineinfile:
-    dest: /etc/default/grub
-    regexp: "^GRUB_CMDLINE_LINUX_DEFAULT="
-    state: absent
+      # not needed when using bootc image
+      #- name: "remove GRUB_CMDLINE_LINUX_DEFAULT option in grub conf"
+      #  lineinfile:
+      #    dest: /etc/default/grub
+      #    regexp: "^GRUB_CMDLINE_LINUX_DEFAULT="
+      #    state: absent
 
-- name: "make sure GRUB_CMDLINE_LINUX starts with a space"
-  lineinfile:
-    dest: /etc/default/grub
-    regexp: "^(GRUB_CMDLINE_LINUX=)\"([ ]*)(.*)\""
-    line: '\1" \3"'
-    state: present
-    backrefs: yes
+      # do not need it when using container file
+      #- name: "make sure GRUB_CMDLINE_LINUX starts with a space"
+      #  lineinfile:
+      #    dest: /etc/default/grub
+      #    regexp: "^(GRUB_CMDLINE_LINUX=)\"([ ]*)(.*)\""
+      #    line: '\1" \3"'
+      #    state: present
+      #    backrefs: yes
 
-- name: "grub conf"
-  lineinfile:
-    dest: /etc/default/grub
-    regexp: "^(GRUB_CMDLINE_LINUX=(?!.* {{ item }})\"[^\"]*)(\".*)"
-    line: '\1 {{ item }}\2'
-    state: present
-    backrefs: yes
-  register: updategrub1
-  with_items:
-    - ipv6.disable=1
-    - efi=runtime
-    - fsck.mode=force
-    - fsck.repair=yes
-    - "{{ grub_append | default([]) }}"
+      # Move it to the container file
+      #- name: "grub conf"
+      #  lineinfile:
+      #    dest: /etc/default/grub
+      #    regexp: "^(GRUB_CMDLINE_LINUX=(?!.* {{ item }})\"[^\"]*)(\".*)"
+      #    line: '\1 {{ item }}\2'
+      #    state: present
+      #    backrefs: yes
+      #  register: updategrub1
+      #  with_items:
+      #    - ipv6.disable=1
+      #    - efi=runtime
+      #    - fsck.mode=force
+      #    - fsck.repair=yes
+      #    - "{{ grub_append | default([]) }}"
 
-- name: "grub conf osprober"
-  lineinfile:
-    dest: /etc/default/grub
-    regexp: '^#?GRUB_DISABLE_OS_PROBER=.*$'
-    line: 'GRUB_DISABLE_OS_PROBER=true'
-    state: present
-  register: updategrub2
-- name: update-grub
-  command: grub2-mkconfig -o /boot/grub2/grub.cfg
-  when: updategrub1.changed or updategrub2.changed
+      # Move it to container
+      #- name: "grub conf osprober"
+      #  lineinfile:
+      #    dest: /etc/default/grub
+      #    regexp: '^#?GRUB_DISABLE_OS_PROBER=.*$'
+      #    line: 'GRUB_DISABLE_OS_PROBER=true'
+      #    state: present
+      #  register: updategrub2
+      #- name: update-grub
+      #  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+      #  when: updategrub1.changed or updategrub2.changed

@@ -2,39 +2,44 @@
 # Copyright (C) 2024 Red Hat, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-- name: enable docker.service
-  ansible.builtin.systemd:
-    name: docker.service
-    enabled: yes
-    state: started
-- name: enable docker.socket
-  ansible.builtin.systemd:
-    name: docker.socket
-    enabled: yes
-    state: started
+# moved to container
+#- name: enable docker.service
+#  ansible.builtin.systemd:
+#    name: docker.service
+#    enabled: yes
+#    state: started
+#- name: enable docker.socket
+#  ansible.builtin.systemd:
+#    name: docker.socket
+#    enabled: yes
+#    state: started
+#
+#
+#- name: add vhost_vsock to /etc/modules-load.d
+#  ansible.builtin.copy:
+#    src: modules/vhost_vsock.conf
+#    dest: /etc/modules-load.d/vhost_vsock.conf
+#    owner: root
+#    group: root
+#    mode: 0751
+#
 
-- name: add vhost_vsock to /etc/modules-load.d
-  ansible.builtin.copy:
-    src: modules/vhost_vsock.conf
-    dest: /etc/modules-load.d/vhost_vsock.conf
-    owner: root
-    group: root
-    mode: 0751
+# moved to containerfile
+#- name: add sriov driver to /etc/modules-load.d
+#  ansible.builtin.copy:
+#    src: modules/sriov_driver.conf
+#    dest: /etc/modules-load.d/sriov_driver.conf
+#    owner: root
+#    group: root
+#    mode: 0751
+#  when: sriov_driver is defined
+#- name: load the sriov module
+#  community.general.modprobe:
+#    name: "{{ sriov_driver }}"
+#    state: present
+#  when: sriov_driver is defined
 
-- name: add sriov driver to /etc/modules-load.d
-  ansible.builtin.copy:
-    src: modules/sriov_driver.conf
-    dest: /etc/modules-load.d/sriov_driver.conf
-    owner: root
-    group: root
-    mode: 0751
-  when: sriov_driver is defined
-- name: load the sriov module
-  community.general.modprobe:
-    name: "{{ sriov_driver }}"
-    state: present
-  when: sriov_driver is defined
-
+# TODO: this should probably be moved to the containerfile
 - name: add sriov sysfs rules
   template:
     src: sriov.conf.j2
@@ -172,13 +177,14 @@
     - "ovs"
   when: removeslices.changed
 
-- name: make sure tuned package is installed
-  ansible.builtin.dnf:
-    name:
-     - tuned
-     - tuned-profiles-nfv
-     - tuned-profiles-realtime
-    state: present
+    # Moved to containerfile
+    #- name: make sure tuned package is installed
+    #  ansible.builtin.dnf:
+    #    name:
+    #     - tuned
+    #     - tuned-profiles-nfv
+    #     - tuned-profiles-realtime
+    #    state: present
 
 - name: Remove old isolation files
   file:
@@ -250,14 +256,16 @@
     name: ovs-vswitchd
   when: ovsvswitchd.changed
 
-- name: enable libvirtd.service
-  ansible.builtin.systemd:
-    name: libvirtd.service
-    enabled: yes
-    state: started
+    # moved to containerfile
+    #- name: enable libvirtd.service
+    #  ansible.builtin.systemd:
+    #    name: libvirtd.service
+    #    enabled: yes
+    #    state: started
 
-- name: Create system alternative for a debian kvm path
-  alternatives:
-    name: "debian kvm"
-    path: "/usr/libexec/qemu-kvm"
-    link: "/usr/bin/qemu-system-x86_64"
+      # I do not think we need this in centos I will move it to the container if it is required
+      #- name: Create system alternative for a debian kvm path
+      #  alternatives:
+      #    name: "debian kvm"
+      #    path: "/usr/libexec/qemu-kvm"
+      #    link: "/usr/bin/qemu-system-x86_64"

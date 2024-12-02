@@ -203,10 +203,11 @@
   hosts: cluster_machines
   become: true
   tasks:
-    - name: Set hostname
-      hostname:
-        name: "{{ hostname | default(inventory_hostname) }}"
-        use: systemd
+    # moved to containerfile
+    #    - name: Set hostname
+    #      hostname:
+    #        name: "{{ hostname | default(inventory_hostname) }}"
+    #        use: systemd
     - name: Build hosts file (Cluster Network)
       lineinfile:
         dest: /etc/hosts

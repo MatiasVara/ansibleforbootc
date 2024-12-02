@@ -38,15 +38,17 @@
     set_fact:
       ansible_host: "{{ ansible_host }}"
 
-  - name: Synchronization of snmp_ scripts
-    ansible.posix.synchronize:
-      src: ../src/debian/snmp/
-      dest: /usr/local/bin/
-      rsync_opts:
-      - "--include=virt-df.sh"
-      - "--exclude=*"
-      - "--chmod=F755"
-      - "--chown=root:root"
+        # moved to container file
+        #  - name: Synchronization of snmp_ scripts
+        #    ansible.posix.synchronize:
+        #      src: ../src/debian/snmp/
+        #      dest: /usr/local/bin/
+        #      rsync_opts:
+        #      - "--include=virt-df.sh"
+        #      - "--exclude=*"
+        #      - "--chmod=F755"
+        #      - "--chown=root:root"
+        #
   - name: Snmp config
     ansible.builtin.template:
       src: ../src/debian/snmp/snmpd.conf.j2
@@ -55,27 +57,29 @@
       owner: root
       group: root
     register: snmpd_conf
-  - name: SNMP PASS AGENT script run by net-snmp for seapath tree
-    copy:
-      src: ../src/debian/snmp/exposeseapathsnmp.pl
-      dest: "/usr/local/bin/exposeseapathsnmp.pl"
-      mode: '0755'
-  - name: script run by cron job to generate snmp data
-    copy:
-      src: ../src/debian/snmp/snmp_getdata.py
-      dest: "/usr/local/sbin/snmp_getdata.py"
-      mode: '0755'
+      # moved to container
+      #  - name: SNMP PASS AGENT script run by net-snmp for seapath tree
+      #    copy:
+      #      src: ../src/debian/snmp/exposeseapathsnmp.pl
+      #      dest: "/usr/local/bin/exposeseapathsnmp.pl"
+      #      mode: '0755'
+      #- name: script run by cron job to generate snmp data
+  #  copy:
+  #    src: ../src/debian/snmp/snmp_getdata.py
+  #    dest: "/usr/local/sbin/snmp_getdata.py"
+  #    mode: '0755'
   - name: cron job to generate snmp data
     copy:
       src: ../src/debian/snmp/seapathsnmp.cron
       dest: "/etc/cron.d/seapathsnmp"
       mode: '0644'
-  - name: Wait for DHCP for SNMP
-    lineinfile:
-      dest: /lib/systemd/system/snmpd.service
-      regexp: "^After="
-      line: "After=network-online.target"
-      state: present
+        #
+        #  - name: Wait for DHCP for SNMP
+        #    lineinfile:
+        #      dest: /lib/systemd/system/snmpd.service
+        #      regexp: "^After="
+        #      line: "After=network-online.target"
+        #      state: present
 
   - name: SNMP V3
     block:
