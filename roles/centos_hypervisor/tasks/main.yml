@@ -256,12 +256,12 @@
     name: ovs-vswitchd
   when: ovsvswitchd.changed
 
-    # moved to containerfile
-    #- name: enable libvirtd.service
-    #  ansible.builtin.systemd:
-    #    name: libvirtd.service
-    #    enabled: yes
-    #    state: started
+# I had to enable this in rhel
+- name: enable libvirtd.service
+  ansible.builtin.systemd:
+    name: libvirtd.service
+    enabled: yes
+    state: started
 
       # I do not think we need this in centos I will move it to the container if it is required
       #- name: Create system alternative for a debian kvm path
